@@ -1,13 +1,3 @@
-# COSC2759 Assignment 2
-
-## Student details
-
-- Full Name: Louisa Christine Carbone
-- Student ID: s3945892
-
-- Full Name: Chu Khai Minh
-- Student ID: s3864172
-
 ## Solution design
 
 The expected outcome of this solution is to automate the deploy of the Foo app, a web application backed by a PostgreSQL database, onto AWS infrastructure using Terraform for infrasturctre provisioning and Ansible for configuration management.
