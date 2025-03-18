@@ -1,0 +1,55 @@
+name: Section D Deployment Pipeline
+on:
+    push:
+        branches:
+            - 'main'
+    workflow_dispatch:
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v3
+
+        - name: Setup AWS credentials directory
+          run: |
+            mkdir -p ~/.aws
+            echo "[default]" > ~/.aws/config
+            echo "region = us-east-1" >> ~/.aws/config
+            echo "${{ secrets.AWS_CREDS }}" > ~/.aws/credentials
+            
+        - name: Setup SSH key directory
+          run: |
+            mkdir -p ~/.ssh
+            echo "${{ secrets.SSH_PUBLIC }}" > ~/.ssh/ssh_key.pub
+            chmod 644 ~/.ssh/ssh_key.pub
+            echo "${{ secrets.SSH_PRIVATE }}" > ~/.ssh/ssh_key
+            chmod 600 ~/.ssh/ssh_key
+
+        - name: Installing Terraform
+          run: |
+            # Installing terraform following Hashicorp instructions.
+            sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
+            wget -O- https://apt.releases.hashicorp.com/gpg \
+            | gpg --dearmor | \
+            sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
+            echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
+            | sudo tee /etc/apt/sources.list.d/hashicorp.list
+
+            sudo apt update
+            sudo apt-get install terraform
+
+        - name: Set up Ansible
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y ansible
+            
+        - name: Executing shell script
+          env:
+            # Passing SSH key paths and User IP variables down to for shell script to use.
+            SSH_PRIVATE_KEY: "/home/runner/.ssh/ssh_key"
+            SSH_PUBLIC_KEY: "/home/runner/.ssh/ssh_key.pub"
+            USER_IP: ${{ secrets.USER_IP }}
+          run: |
+            chmod +x deploy_section_D.sh
+            ./deploy_section_D.sh
