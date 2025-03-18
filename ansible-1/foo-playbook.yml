@@ -1,0 +1,71 @@
+---
+- name: Configure foo server
+  hosts: foo_servers
+  remote_user: ubuntu
+  become: yes # sudo
+
+  tasks:
+  - name: Update apt repository cache
+    ansible.builtin.apt:
+      update_cache: yes
+
+  - name: Install required system packages for Docker
+    apt:
+      pkg:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+        - python3-pip
+        - virtualenv
+        - python3-setuptools
+      state: latest
+      update_cache: true
+  
+  - name: Add Docker GPG apt Key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+  
+  - name: Add Docker Repository
+    apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu jammy stable
+      state: present
+  
+  - name: Update apt and install docker-ce
+    apt:
+      name: docker-ce
+      state: latest
+      update_cache: true
+
+  - name: Install Docker Compose
+    apt:
+      name: docker-compose
+      state: latest
+    become: yes
+
+
+  - name: Create the app directory if it doesn't exist
+    file:
+      path: /home/ubuntu/app
+      state: directory
+
+  - name: Upload the app to instance
+    copy:
+      src: ../app
+      dest: /home/ubuntu/app
+
+  - name: Create the misc directory if it doesn't exist
+    file:
+      path: /home/ubuntu/misc
+      state: directory
+ 
+  - name: Upload the data snapshot file
+    copy:
+      src: ../misc/snapshot-prod-data.sql
+      dest: /home/ubuntu/misc/snapshot-prod-data.sql
+  
+  - name: Upload the docker-compose file
+    copy:
+      src: ../misc/docker-compose.yml
+      dest: /home/ubuntu

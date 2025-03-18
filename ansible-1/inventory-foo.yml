@@ -1,0 +1,5 @@
+foo_servers:
+  hosts:
+    foo:
+      ansible_host:
+
