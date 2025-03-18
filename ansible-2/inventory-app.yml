@@ -1,0 +1,6 @@
+app_servers:
+  hosts:
+    app1:
+      ansible_host: # Fill in your "app-1" instance's public IP address here
+    app2:
+      ansible_host: # Fill in your "app-2" instance's public IP address here

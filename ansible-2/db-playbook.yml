@@ -1,0 +1,64 @@
+- name: Configure db server
+  hosts: db_servers
+  remote_user: ubuntu
+  become: yes # sudo
+
+  tasks:
+  - name: Update apt repository cache
+    ansible.builtin.apt:
+      update_cache: yes
+
+  - name: Install required system packages for Docker
+    apt:
+      pkg:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+        - python3-pip
+        - virtualenv
+        - python3-setuptools
+      state: latest
+      update_cache: true
+  
+  - name: Add Docker GPG apt Key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+  
+  - name: Add Docker Repository
+    apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu jammy stable
+      state: present
+  
+  - name: Update apt and install docker-ce
+    apt:
+      name: docker-ce
+      state: latest
+      update_cache: true
+
+
+  - name: Create the misc directory if it doesn't exist
+    file:
+      path: /home/ubuntu/misc
+      state: directory
+ 
+  - name: Upload the data snapshot file
+    copy:
+      src: ../misc/snapshot-prod-data.sql
+      dest: /home/ubuntu/misc/snapshot-prod-data.sql
+
+  - name: Deploy db docker container
+    docker_container:
+      name: foo_db
+      image: postgres:14.7
+      state: started  # Ensures the container is started
+      restart_policy: always  # Always restart unless stopped
+      env:
+        POSTGRES_PASSWORD: devops
+        POSTGRES_USER: pete
+        POSTGRES_DB: foo
+      published_ports:
+        - "5432:5432"
+      volumes:
+        - /home/ubuntu/misc/snapshot-prod-data.sql:/docker-entrypoint-initdb.d/init.sql
